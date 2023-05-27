@@ -50,7 +50,7 @@ int main() {
   cin >> robot1.y >> robot1.x;
   cout << "Enter coordinates for robot 2(" << numRows - 1 << "x" << numCols - 1
        << "):";
-  cin >> robot2.x >> robot2.y;
+  cin >> robot2.y >> robot2.x;
 
   //! Copy matrix to a string array
   string **matrixString = new string *[numRows];
@@ -78,7 +78,7 @@ int main() {
 
   vector<int> answerRobot2;
   int numPathRobot2 = 0;
-  matrixString[robot2.y][robot1.x] = "S2";
+  matrixString[robot2.y][robot2.x] = "S2";
   while (matrixRobot1[robot2.y][robot2.x] != -2) {
     // Use matrixRobot2 b/c the matrix 1 the value in matrixRobot 1 no more
     // valid
