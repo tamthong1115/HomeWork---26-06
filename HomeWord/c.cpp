@@ -27,66 +27,126 @@ int main() {
   // Dynamically allocate a 2D array
   //! Create an array of 'numRows' elements consisting of int* pointers
   // [int*,int*,int*,int*,int*,int*]
-  int **matrix = new int *[numRows];
+  int **matrixRobot1 = new int *[numRows];
+  int **matrixRobot2 = new int *[numRows];
   for (int row = 0; row < numRows; row++) {
     // Make a array on each int* element
-    matrix[row] = new int[numCols];
+    matrixRobot1[row] = new int[numCols];
+    matrixRobot2[row] = new int[numCols];
     for (int col = 0; col < numCols; col++) {
       int num;
       fileInput >> num;
-      matrix[row][col] = num;
+      matrixRobot1[row][col] = num;
+      matrixRobot2[row][col] = num;
     }
   }
   // Display the int matrix in a table
-  displayIntArray2D(matrix, numRows, numCols);
+  displayIntArray2D(matrixRobot1, numRows, numCols);
 
   coordinates robot1(0, 0);
   coordinates robot2(0, 0);
   cout << "Enter coordinates for robot 1(" << numRows - 1 << "x" << numCols - 1
        << "):";
   cin >> robot1.y >> robot1.x;
-  // cout << "Enter coordinates for robot 2(" << numRows << "x" << numCols <<
-  // "):"; cin >> robot2.x >> robot2.y;
+  cout << "Enter coordinates for robot 2(" << numRows - 1 << "x" << numCols - 1
+       << "):";
+  cin >> robot2.x >> robot2.y;
 
   //! Copy matrix to a string array
   string **matrixString = new string *[numRows];
   for (int i = 0; i < numRows; i++) {
     matrixString[i] = new string[numCols];
     for (int j = 0; j < numCols; j++) {
-      matrixString[i][j] = to_string(matrix[i][j]);
+      matrixString[i][j] = to_string(matrixRobot1[i][j]);
     }
   }
 
-  vector<int> answer;
+  vector<int> answerRobot1;
   int numPathRobot1 = 0;
   matrixString[robot1.y][robot1.x] = 'S'; //! Mark The Start
-  while (matrix[robot1.y][robot1.x] != -2) {
-    answer.push_back(matrix[robot1.y][robot1.x]);
-    // Update the path that robot goes to
-    coordinates next = moveRobot(matrix, robot1.y, robot1.x, numRows, numCols);
+  while (matrixRobot1[robot1.y][robot1.x] != -2) {
+    answerRobot1.push_back(matrixRobot1[robot1.y][robot1.x]);
+    // Update the path that robot passed
+    coordinates next =
+        moveRobot(matrixRobot1, robot1.y, robot1.x, numRows, numCols);
     robot1.y = next.y;
     robot1.x = next.x;
-    matrixString[robot1.y][robot1.x] = 'X';
+    matrixString[robot1.y][robot1.x] = "X";
     numPathRobot1++;
   }
-  matrixString[robot1.y][robot1.x] = 'E'; //!  Mark The End
+  matrixString[robot1.y][robot1.x] = "E"; //!  Mark The End
+
+  vector<int> answerRobot2;
+  int numPathRobot2 = 0;
+  matrixString[robot2.y][robot1.x] = "S2";
+  while (matrixRobot1[robot2.y][robot2.x] != -2) {
+    // Use matrixRobot2 b/c the matrix 1 the value in matrixRobot 1 no more
+    // valid
+    answerRobot2.push_back(matrixRobot2[robot2.y][robot2.x]);
+    // Update the path that robot goes to
+    coordinates next =
+        moveRobot(matrixRobot1, robot2.y, robot2.x, numRows, numCols);
+    robot2.y = next.y;
+    robot2.x = next.x;
+    matrixString[robot2.y][robot2.x] = "X2";
+    numPathRobot2++;
+  }
+  matrixString[robot2.y][robot2.x] = "E2"; //!  Mark The End
 
   //* Write the answer to "Output.txt"
   ofstream fileOutput("Output.txt");
+  fileOutput << "Robot 1" << endl;
   fileOutput << numPathRobot1 << endl;
   //* Write the element the robot passed
-  for (int i = 0; i < answer.size(); i++) {
-    fileOutput << answer[i] << " ";
+  for (int i = 0; i < answerRobot1.size(); i++) {
+    fileOutput << answerRobot1[i] << " ";
   }
+
+  fileOutput << endl;
+
+  fileOutput << "Robot 2" << endl;
+  fileOutput << numPathRobot2 << endl;
+  for (int i = 0; i < answerRobot2.size(); i++) {
+    fileOutput << answerRobot2[i] << " ";
+  }
+
+  // // Check path matches
+  // ofstream matchesFile("matchesPath.txt");
+  // vector<int> matchesPath;
+  // int arr[numRows * numCols] = {0};
+  // int largerPath;
+  // if(answerRobot1.size() > answerRobot2.size()){
+  //   largerPath = answerRobot1.size();
+  // }else{
+  //   largerPath = answerRobot2.size();
+  // }
+  // for(int i =0; i < largerPath; i++ ){
+  //   arr[answerRobot1[i]]++;
+  //   arr[answerRobot2[i]]++;
+  // }
+  // for(int i =0; i < largerPath; i++){
+  //   if(arr[i] == 2) matchesPath.push_back(arr[i]);
+  // }
+
+  // for(int i =0; i < matchesPath.size();i++){
+  //   matchesFile << matchesPath[i] << " ";
+  // }
+
+
 
   cout << endl;
   displayStringArray2D(matrixString, numRows, numCols);
 
   // Delete the dynamically allocated memory
   for (int row = 0; row < numRows; row++) {
-    delete[] matrix[row];
+    delete[] matrixRobot1[row];
   }
-  delete[] matrix;
+  delete[] matrixRobot1;
+
+  for (int row = 0; row < numRows; row++) {
+    delete[] matrixRobot2[row];
+  }
+  delete[] matrixRobot2;
 
   for (int row = 0; row < numRows; row++) {
     delete[] matrixString[row];
