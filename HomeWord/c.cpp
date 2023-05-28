@@ -8,6 +8,7 @@ using namespace std;
 
 void displayIntArray2D(int **array, int rows, int cols);
 void displayStringArray2D(std::string **array, int rows, int cols);
+
 struct coordinates {
   coordinates(int x1, int y1) {
     x = x1;
@@ -18,6 +19,11 @@ struct coordinates {
 
 coordinates moveRobot(int **array, int coor_y, int coor_x, int numRows,
                       int numCols);
+
+
+void explorePath(int **matrixOriginal, int **matrixForMove,
+                 string **matrixString, vector<int> &answer, coordinates &robot,
+                 int numRows, int numCols, string mark);                      
 int main() {
   ifstream fileInput("input.txt");
   int numRows;
@@ -27,21 +33,21 @@ int main() {
   // Dynamically allocate a 2D array
   //! Create an array of 'numRows' elements consisting of int* pointers
   // [int*,int*,int*,int*,int*,int*]
-  int **matrixRobot1 = new int *[numRows];
-  int **matrixRobot2 = new int *[numRows];
+  int **matrixForMove = new int *[numRows];
+  int **matrixOriginal = new int *[numRows];
   for (int row = 0; row < numRows; row++) {
     // Make a array on each int* element
-    matrixRobot1[row] = new int[numCols];
-    matrixRobot2[row] = new int[numCols];
+    matrixForMove[row] = new int[numCols];
+    matrixOriginal[row] = new int[numCols];
     for (int col = 0; col < numCols; col++) {
       int num;
       fileInput >> num;
-      matrixRobot1[row][col] = num;
-      matrixRobot2[row][col] = num;
+      matrixForMove[row][col] = num;
+      matrixOriginal[row][col] = num;
     }
   }
   // Display the int matrix in a table
-  displayIntArray2D(matrixRobot1, numRows, numCols);
+  displayIntArray2D(matrixForMove, numRows, numCols);
 
   coordinates robot1(0, 0);
   coordinates robot2(0, 0);
@@ -57,46 +63,27 @@ int main() {
   for (int i = 0; i < numRows; i++) {
     matrixString[i] = new string[numCols];
     for (int j = 0; j < numCols; j++) {
-      matrixString[i][j] = to_string(matrixRobot1[i][j]);
+      matrixString[i][j] = to_string(matrixForMove[i][j]);
     }
   }
 
   vector<int> answerRobot1;
-  int numPathRobot1 = 0;
   matrixString[robot1.y][robot1.x] = 'S'; //! Mark The Start
-  while (matrixRobot1[robot1.y][robot1.x] != -2) {
-    answerRobot1.push_back(matrixRobot1[robot1.y][robot1.x]);
-    // Update the path that robot passed
-    coordinates next =
-        moveRobot(matrixRobot1, robot1.y, robot1.x, numRows, numCols);
-    robot1.y = next.y;
-    robot1.x = next.x;
-    matrixString[robot1.y][robot1.x] = "X";
-    numPathRobot1++;
-  }
+  explorePath(matrixOriginal, matrixForMove, matrixString, answerRobot1, robot1,
+              numRows, numCols, "X");
   matrixString[robot1.y][robot1.x] = "E"; //!  Mark The End
 
   vector<int> answerRobot2;
-  int numPathRobot2 = 0;
   matrixString[robot2.y][robot2.x] = "S2";
-  while (matrixRobot1[robot2.y][robot2.x] != -2) {
-    // Use matrixRobot2 b/c the matrix 1 the value in matrixRobot 1 no more
-    // valid
-    answerRobot2.push_back(matrixRobot2[robot2.y][robot2.x]);
-    // Update the path that robot goes to
-    coordinates next =
-        moveRobot(matrixRobot1, robot2.y, robot2.x, numRows, numCols);
-    robot2.y = next.y;
-    robot2.x = next.x;
-    matrixString[robot2.y][robot2.x] = "X2";
-    numPathRobot2++;
-  }
+ explorePath(matrixOriginal, matrixForMove, matrixString, answerRobot2, robot2,
+              numRows, numCols, "X2");
   matrixString[robot2.y][robot2.x] = "E2"; //!  Mark The End
 
   //* Write the answer to "Output.txt"
   ofstream fileOutput("Output.txt");
   fileOutput << "Robot 1" << endl;
-  fileOutput << numPathRobot1 << endl;
+  // Take the number of path that the robot have passed
+  fileOutput << answerRobot1.size() << endl;
   //* Write the element the robot passed
   for (int i = 0; i < answerRobot1.size(); i++) {
     fileOutput << answerRobot1[i] << " ";
@@ -105,7 +92,7 @@ int main() {
   fileOutput << endl;
 
   fileOutput << "Robot 2" << endl;
-  fileOutput << numPathRobot2 << endl;
+  fileOutput << answerRobot2.size() << endl;
   for (int i = 0; i < answerRobot2.size(); i++) {
     fileOutput << answerRobot2[i] << " ";
   }
@@ -132,21 +119,19 @@ int main() {
   //   matchesFile << matchesPath[i] << " ";
   // }
 
-
-
   cout << endl;
   displayStringArray2D(matrixString, numRows, numCols);
 
   // Delete the dynamically allocated memory
   for (int row = 0; row < numRows; row++) {
-    delete[] matrixRobot1[row];
+    delete[] matrixForMove[row];
   }
-  delete[] matrixRobot1;
+  delete[] matrixForMove;
 
   for (int row = 0; row < numRows; row++) {
-    delete[] matrixRobot2[row];
+    delete[] matrixOriginal[row];
   }
-  delete[] matrixRobot2;
+  delete[] matrixOriginal;
 
   for (int row = 0; row < numRows; row++) {
     delete[] matrixString[row];
@@ -171,6 +156,10 @@ void drawLine(int cols, int maxElementWidth) {
 coordinates moveRobot(int **array, int coor_y, int coor_x, int numRows,
                       int numCols) {
 
+  // int numRow = sizeof(array) / sizeof(int);
+  // int numCol = sizeof(array[0]) / sizeof(int);
+  // Can't do this. B/c the dynamic the value N is not stored anywhere.
+  // So sizeof(array) prefer to sizeof(int)
   array[coor_y][coor_x] = -1; //! in arr 2d y first x second arr[y][x]
   coordinates top(coor_x, coor_y - 1);
   coordinates bottom(coor_x, coor_y + 1);
@@ -206,6 +195,22 @@ coordinates moveRobot(int **array, int coor_y, int coor_x, int numRows,
   }
 }
 
+void explorePath(int **matrixOriginal, int **matrixForMove,
+                 string **matrixString, vector<int> &answer, coordinates &robot,
+                 int numRows, int numCols, string mark) {
+  answer.push_back(matrixOriginal[robot.y][robot.x]);
+  // Update the path that robot passed
+  coordinates next =
+      moveRobot(matrixForMove, robot.y, robot.x, numRows, numCols);
+  robot.y = next.y;
+  robot.x = next.x;
+  matrixString[robot.y][robot.x] = mark;
+  while (matrixForMove[robot.y][robot.x] != -2) {
+    explorePath(matrixOriginal, matrixForMove,
+                matrixString, answer,robot,
+                 numRows,  numCols,  mark);
+  }
+}
 void displayIntArray2D(int **array, int rows, int cols) {
   int maxElementWidth = 0;
 
