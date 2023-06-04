@@ -3,6 +3,8 @@
 #include <iostream>
 #include <string>
 #include <vector>
+#include<windows.h>
+
 
 using namespace std;
 
@@ -24,6 +26,23 @@ coordinates moveRobot(int **array, int coor_y, int coor_x, int numRows,
 void explorePath(int **matrixOriginal, int **matrixForMove,
                  string **matrixString, vector<int> &answer, coordinates &robot,
                  int numRows, int numCols, string mark);                      
+                 
+void gotoxy(int x, int y)
+{
+  static HANDLE h = NULL;  
+  if(!h)
+    h = GetStdHandle(STD_OUTPUT_HANDLE);
+  COORD c = { x, y };  
+  SetConsoleCursorPosition(h,c);
+}
+
+void drawPath(coordinates &robot){
+  int x = robot.x + 3;
+  int y = (robot.y + 1) * 2;
+  gotoxy(x,y);
+  cout <<"A";
+} 
+
 int main() {
   ifstream fileInput("input.txt");
   int numRows;
@@ -46,8 +65,6 @@ int main() {
       matrixOriginal[row][col] = num;
     }
   }
-  // Display the int matrix in a table
-  displayIntArray2D(matrixForMove, numRows, numCols);
 
   coordinates robot1(0, 0);
   coordinates robot2(0, 0);
@@ -57,6 +74,10 @@ int main() {
   cout << "Enter coordinates for robot 2(" << numRows - 1 << "x" << numCols - 1
        << "):";
   cin >> robot2.y >> robot2.x;
+
+  gotoxy(0,0);
+  // Display the int matrix in a table
+  displayIntArray2D(matrixForMove, numRows, numCols);
 
   //! Copy matrix to a string array
   string **matrixString = new string *[numRows];
@@ -97,45 +118,21 @@ int main() {
     fileOutput << answerRobot2[i] << " ";
   }
 
-  // // Check path matches
-  // ofstream matchesFile("matchesPath.txt");
-  // vector<int> matchesPath;
-  // int arr[numRows * numCols] = {0};
-  // int largerPath;
-  // if(answerRobot1.size() > answerRobot2.size()){
-  //   largerPath = answerRobot1.size();
-  // }else{
-  //   largerPath = answerRobot2.size();
-  // }
-  // for(int i =0; i < largerPath; i++ ){
-  //   arr[answerRobot1[i]]++;
-  //   arr[answerRobot2[i]]++;
-  // }
-  // for(int i =0; i < largerPath; i++){
-  //   if(arr[i] == 2) matchesPath.push_back(arr[i]);
-  // }
 
-  // for(int i =0; i < matchesPath.size();i++){
-  //   matchesFile << matchesPath[i] << " ";
-  // }
+  // cout << endl;
+  // displayStringArray2D(matrixString, numRows, numCols);
+  drawPath(robot1);
 
-  cout << endl;
-  displayStringArray2D(matrixString, numRows, numCols);
+
 
   // Delete the dynamically allocated memory
   for (int row = 0; row < numRows; row++) {
     delete[] matrixForMove[row];
-  }
-  delete[] matrixForMove;
-
-  for (int row = 0; row < numRows; row++) {
     delete[] matrixOriginal[row];
-  }
-  delete[] matrixOriginal;
-
-  for (int row = 0; row < numRows; row++) {
     delete[] matrixString[row];
   }
+  delete[] matrixForMove;
+  delete[] matrixOriginal;
   delete[] matrixString;
 
   return 0;
@@ -153,23 +150,23 @@ void drawLine(int cols, int maxElementWidth) {
   cout << endl;
 };
 
-coordinates moveRobot(int **array, int coor_y, int coor_x, int numRows,
+coordinates moveRobot(int **array, coordinates &robot, int numRows,
                       int numCols) {
 
   // int numRow = sizeof(array) / sizeof(int);
   // int numCol = sizeof(array[0]) / sizeof(int);
   // Can't do this. B/c the dynamic the value N is not stored anywhere.
   // So sizeof(array) prefer to sizeof(int)
-  array[coor_y][coor_x] = -1; //! in arr 2d y first x second arr[y][x]
-  coordinates top(coor_x, coor_y - 1);
-  coordinates bottom(coor_x, coor_y + 1);
-  coordinates left(coor_x - 1, coor_y);
-  coordinates right(coor_x + 1, coor_y);
+  array[robot.y][robot.x] = -1; //! in arr 2d y first x second arr[y][x]
+  coordinates top(robot.x, robot.y - 1);
+  coordinates bottom(robot.x, robot.y + 1);
+  coordinates left(robot.x - 1, robot.y);
+  coordinates right(robot.x + 1, robot.y);
 
-  int ways[4] = {(coor_y > 0) ? array[top.y][top.x] : -1,
-                 (coor_y < numRows - 1) ? array[bottom.y][bottom.x] : -1,
-                 (coor_x > 0) ? array[left.y][left.x] : -1,
-                 (coor_x < numCols - 1) ? array[right.y][right.x] : -1};
+  int ways[4] = {(robot.y > 0) ? array[top.y][top.x] : -1,
+                 (robot.y < numRows - 1) ? array[bottom.y][bottom.x] : -1,
+                 (robot.x > 0) ? array[left.y][left.x] : -1,
+                 (robot.x < numCols - 1) ? array[right.y][right.x] : -1};
 
   int maxValue = ways[0];
   int maxIndex = 0;
@@ -181,8 +178,8 @@ coordinates moveRobot(int **array, int coor_y, int coor_x, int numRows,
   }
   //! Get out the loop
   if (maxValue == -1) {
-    array[coor_y][coor_x] = -2;
-    return coordinates(coor_x, coor_y);
+    array[robot.y][robot.x] = -2;
+    return coordinates(robot.x, robot.y);
   }
   if (maxIndex == 0) {
     return top;
@@ -193,7 +190,11 @@ coordinates moveRobot(int **array, int coor_y, int coor_x, int numRows,
   } else if (maxIndex == 3) {
     return right;
   }
-}
+  return robot;
+ }
+
+
+
 
 void explorePath(int **matrixOriginal, int **matrixForMove,
                  string **matrixString, vector<int> &answer, coordinates &robot,
@@ -201,7 +202,7 @@ void explorePath(int **matrixOriginal, int **matrixForMove,
   answer.push_back(matrixOriginal[robot.y][robot.x]);
   // Update the path that robot passed
   coordinates next =
-      moveRobot(matrixForMove, robot.y, robot.x, numRows, numCols);
+      moveRobot(matrixForMove,robot, numRows, numCols);
   robot.y = next.y;
   robot.x = next.x;
   matrixString[robot.y][robot.x] = mark;
