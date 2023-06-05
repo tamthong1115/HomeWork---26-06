@@ -59,7 +59,7 @@ void writeOuput(vector<int> &answerRobot, ofstream &fileOutput) {
 }
 
 int main() {
-  ifstream fileInput("input.txt");
+  ifstream fileInput("File/input.txt");
   int numRows;
   int numCols;
   fileInput >> numRows >> numCols;
@@ -106,6 +106,10 @@ int main() {
     }
   }
 
+
+  //TODO Find MaxElementWidth
+
+
   vector<int> answerRobot1;
   vector<int> answerRobot2;
   while ((matrixForMove[robot1.y][robot1.x] != -2) ||
@@ -118,7 +122,7 @@ int main() {
                 robot2, numRows, numCols, "X2", "B");
   }
 
-  ofstream fileOutput("Output.txt");
+  ofstream fileOutput("File/Output.txt");
   fileOutput << "Robot 1" << endl;
   writeOuput(answerRobot1, fileOutput);
 
