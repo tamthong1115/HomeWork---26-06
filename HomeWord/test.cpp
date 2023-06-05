@@ -7,6 +7,7 @@
 #include <thread>
 #include <time.h>
 #include <vector>
+#include<DisplayArray2D>
 
 using namespace std;
 

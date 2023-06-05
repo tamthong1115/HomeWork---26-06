@@ -1,7 +1,11 @@
+#include <Windows.h>
+#include <chrono>
 #include <fstream>
 #include <iomanip> // for setw
 #include <iostream>
 #include <string>
+#include <thread>
+#include <time.h>
 #include <vector>
 
 using namespace std;
@@ -14,17 +18,18 @@ struct coordinates {
     x = x1;
     y = y1;
   }
-  int y, x;
+  int y = 0;
+  int x = 0;
 };
 
 coordinates moveRobot(int **array, int coor_y, int coor_x, int numRows,
                       int numCols);
 
-
 void explorePath(int **matrixOriginal, int **matrixForMove,
                  string **matrixString, vector<int> &answer, coordinates &robot,
-                 int numRows, int numCols, string mark);                      
+                 int numRows, int numCols, string mark);
 int main() {
+
   ifstream fileInput("input.txt");
   int numRows;
   int numCols;
@@ -47,7 +52,7 @@ int main() {
     }
   }
   // Display the int matrix in a table
-  displayIntArray2D(matrixForMove, numRows, numCols);
+  displayIntArray2D(matrixForMove, numRows, numCols); // show map
 
   coordinates robot1(0, 0);
   coordinates robot2(0, 0);
@@ -57,6 +62,8 @@ int main() {
   cout << "Enter coordinates for robot 2(" << numRows - 1 << "x" << numCols - 1
        << "):";
   cin >> robot2.y >> robot2.x;
+
+  int begin = clock();
 
   //! Copy matrix to a string array
   string **matrixString = new string *[numRows];
@@ -68,17 +75,19 @@ int main() {
   }
 
   vector<int> answerRobot1;
-  matrixString[robot1.y][robot1.x] = 'S'; //! Mark The Start
-  explorePath(matrixOriginal, matrixForMove, matrixString, answerRobot1, robot1,
-              numRows, numCols, "X");
-  matrixString[robot1.y][robot1.x] = "E"; //!  Mark The End
-
   vector<int> answerRobot2;
+  matrixString[robot1.y][robot1.x] = 'S'; //! Mark The Start
   matrixString[robot2.y][robot2.x] = "S2";
- explorePath(matrixOriginal, matrixForMove, matrixString, answerRobot2, robot2,
-              numRows, numCols, "X2");
-  matrixString[robot2.y][robot2.x] = "E2"; //!  Mark The End
+  while ((matrixForMove[robot1.y][robot1.x] != -2) ||
+         (matrixForMove[robot2.y][robot2.x] != -2)) {
 
+    explorePath(matrixOriginal, matrixForMove, matrixString, answerRobot1,
+                robot1, numRows, numCols, "X");
+    explorePath(matrixOriginal, matrixForMove, matrixString, answerRobot2,
+                robot2, numRows, numCols, "X2");
+  }
+  matrixString[robot1.y][robot1.x] = "E";  //!  Mark The End
+  matrixString[robot2.y][robot2.x] = "E2"; //!  Mark The End
   //* Write the answer to "Output.txt"
   ofstream fileOutput("Output.txt");
   fileOutput << "Robot 1" << endl;
@@ -125,33 +134,18 @@ int main() {
   // Delete the dynamically allocated memory
   for (int row = 0; row < numRows; row++) {
     delete[] matrixForMove[row];
-  }
-  delete[] matrixForMove;
-
-  for (int row = 0; row < numRows; row++) {
     delete[] matrixOriginal[row];
-  }
-  delete[] matrixOriginal;
-
-  for (int row = 0; row < numRows; row++) {
     delete[] matrixString[row];
   }
+  delete[] matrixForMove;
+  delete[] matrixOriginal;
   delete[] matrixString;
 
+  int end = clock();
+  cout << endl;
+  cout << ((float)end - begin) / CLOCKS_PER_SEC;
   return 0;
 }
-
-void drawLine(int cols, int maxElementWidth) {
-  // Draw +----+-----+----+
-  cout << "+";
-  for (int j = 0; j < cols; j++) {
-    for (int l = 0; l < maxElementWidth + 2; l++) {
-      cout << "-";
-    }
-    cout << "+";
-  }
-  cout << endl;
-};
 
 coordinates moveRobot(int **array, int coor_y, int coor_x, int numRows,
                       int numCols) {
@@ -184,6 +178,7 @@ coordinates moveRobot(int **array, int coor_y, int coor_x, int numRows,
     array[coor_y][coor_x] = -2;
     return coordinates(coor_x, coor_y);
   }
+
   if (maxIndex == 0) {
     return top;
   } else if (maxIndex == 1) {
@@ -194,23 +189,18 @@ coordinates moveRobot(int **array, int coor_y, int coor_x, int numRows,
     return right;
   }
 }
-
-void explorePath(int **matrixOriginal, int **matrixForMove,
-                 string **matrixString, vector<int> &answer, coordinates &robot,
-                 int numRows, int numCols, string mark) {
-  answer.push_back(matrixOriginal[robot.y][robot.x]);
-  // Update the path that robot passed
-  coordinates next =
-      moveRobot(matrixForMove, robot.y, robot.x, numRows, numCols);
-  robot.y = next.y;
-  robot.x = next.x;
-  matrixString[robot.y][robot.x] = mark;
-  while (matrixForMove[robot.y][robot.x] != -2) {
-    explorePath(matrixOriginal, matrixForMove,
-                matrixString, answer,robot,
-                 numRows,  numCols,  mark);
+void drawLine(int cols, int maxElementWidth) {
+  // Draw +----+-----+----+
+  cout << "+";
+  for (int j = 0; j < cols; j++) {
+    for (int l = 0; l < maxElementWidth + 2; l++) {
+      cout << "-";
+    }
+    cout << "+";
   }
-}
+  cout << endl;
+};
+
 void displayIntArray2D(int **array, int rows, int cols) {
   int maxElementWidth = 0;
 
@@ -258,5 +248,18 @@ void displayStringArray2D(std::string **array, int rows, int cols) {
     cout << "|" << endl;
 
     drawLine(cols, maxElementWidth);
+  }
+}
+void explorePath(int **matrixOriginal, int **matrixForMove,
+                 string **matrixString, vector<int> &answer, coordinates &robot,
+                 int numRows, int numCols, string mark) {
+  if (matrixForMove[robot.y][robot.x] != -2) {
+    answer.push_back(matrixOriginal[robot.y][robot.x]);
+    // Update the path that robot passed
+    if (matrixString[robot.y][robot.x] != "S" &&
+        matrixString[robot.y][robot.x] != "S2") {
+      matrixString[robot.y][robot.x] = mark;
+    }
+    robot = moveRobot(matrixForMove, robot.y, robot.x, numRows, numCols);
   }
 }
