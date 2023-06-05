@@ -10,7 +10,6 @@
 using namespace std;
 
 void displayIntArray2D(int **array, int rows, int cols);
-void displayStringArray2D(std::string **array, int rows, int cols);
 
 struct coordinates {
   coordinates(int x1, int y1) {
@@ -23,9 +22,9 @@ struct coordinates {
 coordinates moveRobot(int **array, int coor_y, int coor_x, int numRows,
                       int numCols);
 
-void explorePath(int **matrixOriginal, int **matrixForMove,
-                 string **matrixString, vector<int> &answer, coordinates &robot,
-                 int numRows, int numCols, string mark, string nameRobot);
+void explorePath(int **matrixOriginal, int **matrixForMove, vector<int> &answer,
+                 coordinates &robot, int numRows, int numCols,
+                 int maxElementWidth, string mark, string nameRobot);
 
 void gotoxy(int x, int y) {
   static HANDLE h = NULL;
@@ -56,6 +55,21 @@ void writeOuput(vector<int> &answerRobot, ofstream &fileOutput) {
     fileOutput << answerRobot[i] << " ";
   }
   fileOutput << endl;
+}
+
+int findMaxElementWidth(int **array, int rows, int cols) {
+  int maxElementWidth = 0;
+
+  // Find the maximum element width
+  for (int i = 0; i < rows; i++) {
+    for (int j = 0; j < cols; j++) {
+      int elementWidth = to_string(array[i][j]).length();
+      if (elementWidth > maxElementWidth) {
+        maxElementWidth = elementWidth;
+      }
+    }
+  }
+  return maxElementWidth;
 }
 
 int main() {
@@ -97,29 +111,18 @@ int main() {
   // Display the int matrix in a table
   displayIntArray2D(matrixForMove, numRows, numCols);
 
-  //! Copy matrix to a string array
-  string **matrixString = new string *[numRows];
-  for (int i = 0; i < numRows; i++) {
-    matrixString[i] = new string[numCols];
-    for (int j = 0; j < numCols; j++) {
-      matrixString[i][j] = to_string(matrixForMove[i][j]);
-    }
-  }
-
-
-  //TODO Find MaxElementWidth
-
+  int maxElementWidth = findMaxElementWidth(matrixOriginal, numRows, numCols);
 
   vector<int> answerRobot1;
   vector<int> answerRobot2;
   while ((matrixForMove[robot1.y][robot1.x] != -2) ||
          (matrixForMove[robot2.y][robot2.x] != -2)) {
 
-    explorePath(matrixOriginal, matrixForMove, matrixString, answerRobot1,
-                robot1, numRows, numCols, "X", "A");
-    Sleep(1000);
-    explorePath(matrixOriginal, matrixForMove, matrixString, answerRobot2,
-                robot2, numRows, numCols, "X2", "B");
+    explorePath(matrixOriginal, matrixForMove, answerRobot1,
+                robot1, numRows, numCols, maxElementWidth, "X", "A");
+    // Sleep(500);
+    explorePath(matrixOriginal, matrixForMove, answerRobot2,
+                robot2, numRows, numCols, maxElementWidth, "X2", "B");
   }
 
   ofstream fileOutput("File/Output.txt");
@@ -137,11 +140,9 @@ int main() {
   for (int row = 0; row < numRows; row++) {
     delete[] matrixForMove[row];
     delete[] matrixOriginal[row];
-    delete[] matrixString[row];
   }
   delete[] matrixForMove;
   delete[] matrixOriginal;
-  delete[] matrixString;
 
   return 0;
 }
@@ -201,14 +202,14 @@ coordinates moveRobot(int **array, coordinates &robot, int numRows,
   return robot;
 }
 
-void explorePath(int **matrixOriginal, int **matrixForMove,
-                 string **matrixString, vector<int> &answer, coordinates &robot,
-                 int numRows, int numCols, string mark, string nameRobot) {
+void explorePath(int **matrixOriginal, int **matrixForMove, vector<int> &answer,
+                 coordinates &robot, int numRows, int numCols,
+                 int maxElementWidth, string mark, string nameRobot) {
   if (matrixForMove[robot.y][robot.x] != -2) {
     answer.push_back(matrixOriginal[robot.y][robot.x]);
-    drawPath(robot, 3, nameRobot); // draw "A", "B"
-    Sleep(1000);
-    drawPath(robot, 3, mark); // draw X
+    drawPath(robot, maxElementWidth, nameRobot); // draw "A", "B"
+    Sleep(500);
+    drawPath(robot, maxElementWidth, mark); // draw X
     // Update the path that robot passed
     coordinates next = moveRobot(matrixForMove, robot, numRows, numCols);
     robot.y = next.y;
@@ -216,43 +217,11 @@ void explorePath(int **matrixOriginal, int **matrixForMove,
     drawPath(robot, 3, nameRobot);
   }
 }
+
 void displayIntArray2D(int **array, int rows, int cols) {
-  int maxElementWidth = 0;
 
-  // Find the maximum element width
-  for (int i = 0; i < rows; i++) {
-    for (int j = 0; j < cols; j++) {
-      int elementWidth = to_string(array[i][j]).length();
-      if (elementWidth > maxElementWidth) {
-        maxElementWidth = elementWidth;
-      }
-    }
-  }
-  // Display the array with proper alignment
-  drawLine(cols, maxElementWidth);
+  int maxElementWidth = findMaxElementWidth(array, rows, cols);
 
-  for (int i = 0; i < rows; i++) {
-    for (int j = 0; j < cols; j++) {
-      cout << "| " << setw(maxElementWidth) << array[i][j] << " ";
-    }
-    cout << "|" << endl;
-
-    drawLine(cols, maxElementWidth);
-  }
-}
-
-void displayStringArray2D(std::string **array, int rows, int cols) {
-  int maxElementWidth = 0;
-
-  // Find the maximum element width
-  for (int i = 0; i < rows; i++) {
-    for (int j = 0; j < cols; j++) {
-      int elementWidth = array[i][j].length();
-      if (elementWidth > maxElementWidth) {
-        maxElementWidth = elementWidth;
-      }
-    }
-  }
   // Display the array with proper alignment
   drawLine(cols, maxElementWidth);
 
