@@ -1,11 +1,8 @@
-#include "DisplayArray2D.cpp"
 #include <fstream>
 #include <iomanip> // for setw
 #include <iostream>
 #include <string>
-#include <time.h>
 #include <vector>
-
 
 using namespace std;
 
@@ -17,18 +14,17 @@ struct coordinates {
     x = x1;
     y = y1;
   }
-  int y = 0;
-  int x = 0;
+  int y, x;
 };
 
 coordinates moveRobot(int **array, int coor_y, int coor_x, int numRows,
                       int numCols);
 
+
 void explorePath(int **matrixOriginal, int **matrixForMove,
                  string **matrixString, vector<int> &answer, coordinates &robot,
-                 int numRows, int numCols, string mark);
+                 int numRows, int numCols, string mark);                      
 int main() {
-
   ifstream fileInput("input.txt");
   int numRows;
   int numCols;
@@ -51,7 +47,7 @@ int main() {
     }
   }
   // Display the int matrix in a table
-  displayIntArray2D(matrixForMove, numRows, numCols); // show map
+  displayIntArray2D(matrixForMove, numRows, numCols);
 
   coordinates robot1(0, 0);
   coordinates robot2(0, 0);
@@ -61,8 +57,6 @@ int main() {
   cout << "Enter coordinates for robot 2(" << numRows - 1 << "x" << numCols - 1
        << "):";
   cin >> robot2.y >> robot2.x;
-
-  int begin = clock();
 
   //! Copy matrix to a string array
   string **matrixString = new string *[numRows];
@@ -81,7 +75,7 @@ int main() {
 
   vector<int> answerRobot2;
   matrixString[robot2.y][robot2.x] = "S2";
-  explorePath(matrixOriginal, matrixForMove, matrixString, answerRobot2, robot2,
+ explorePath(matrixOriginal, matrixForMove, matrixString, answerRobot2, robot2,
               numRows, numCols, "X2");
   matrixString[robot2.y][robot2.x] = "E2"; //!  Mark The End
 
@@ -143,11 +137,21 @@ int main() {
     delete[] matrixString[row];
   }
   delete[] matrixString;
-  int end = clock();
-  cout << endl;
-  cout << ((float)end - begin) / CLOCKS_PER_SEC;
+
   return 0;
 }
+
+void drawLine(int cols, int maxElementWidth) {
+  // Draw +----+-----+----+
+  cout << "+";
+  for (int j = 0; j < cols; j++) {
+    for (int l = 0; l < maxElementWidth + 2; l++) {
+      cout << "-";
+    }
+    cout << "+";
+  }
+  cout << endl;
+};
 
 coordinates moveRobot(int **array, int coor_y, int coor_x, int numRows,
                       int numCols) {
@@ -180,7 +184,6 @@ coordinates moveRobot(int **array, int coor_y, int coor_x, int numRows,
     array[coor_y][coor_x] = -2;
     return coordinates(coor_x, coor_y);
   }
-
   if (maxIndex == 0) {
     return top;
   } else if (maxIndex == 1) {
@@ -203,7 +206,57 @@ void explorePath(int **matrixOriginal, int **matrixForMove,
   robot.x = next.x;
   matrixString[robot.y][robot.x] = mark;
   while (matrixForMove[robot.y][robot.x] != -2) {
-    explorePath(matrixOriginal, matrixForMove, matrixString, answer, robot,
-                numRows, numCols, mark);
+    explorePath(matrixOriginal, matrixForMove,
+                matrixString, answer,robot,
+                 numRows,  numCols,  mark);
+  }
+}
+void displayIntArray2D(int **array, int rows, int cols) {
+  int maxElementWidth = 0;
+
+  // Find the maximum element width
+  for (int i = 0; i < rows; i++) {
+    for (int j = 0; j < cols; j++) {
+      int elementWidth = to_string(array[i][j]).length();
+      if (elementWidth > maxElementWidth) {
+        maxElementWidth = elementWidth;
+      }
+    }
+  }
+  // Display the array with proper alignment
+  drawLine(cols, maxElementWidth);
+
+  for (int i = 0; i < rows; i++) {
+    for (int j = 0; j < cols; j++) {
+      cout << "| " << setw(maxElementWidth) << array[i][j] << " ";
+    }
+    cout << "|" << endl;
+
+    drawLine(cols, maxElementWidth);
+  }
+}
+
+void displayStringArray2D(std::string **array, int rows, int cols) {
+  int maxElementWidth = 0;
+
+  // Find the maximum element width
+  for (int i = 0; i < rows; i++) {
+    for (int j = 0; j < cols; j++) {
+      int elementWidth = array[i][j].length();
+      if (elementWidth > maxElementWidth) {
+        maxElementWidth = elementWidth;
+      }
+    }
+  }
+  // Display the array with proper alignment
+  drawLine(cols, maxElementWidth);
+
+  for (int i = 0; i < rows; i++) {
+    for (int j = 0; j < cols; j++) {
+      cout << "| " << setw(maxElementWidth) << array[i][j] << " ";
+    }
+    cout << "|" << endl;
+
+    drawLine(cols, maxElementWidth);
   }
 }
