@@ -80,7 +80,7 @@ void generateRandNum() {
   // Take the seed value as an argument
   std::mt19937 generate(rand()); // Mersenne Twister engine
 
-  const MAX = 10000;
+  const int MAX = 10000;
 
   std::uniform_int_distribution<> dist(1, MAX);
   return dist(generate);
